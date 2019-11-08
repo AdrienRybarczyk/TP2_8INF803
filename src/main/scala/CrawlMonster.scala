@@ -10,15 +10,19 @@ class Attack(n : String, atm : ArrayBuffer[Int], dmg_f : Int, dmg_d : Int, rng :
   var attack_type : String = tp
 }
 
-class Monster(n :  String, hp_m : Int, hp_c : Int, df : Int, atks : ArrayBuffer[Attack], sp : Int, t : String, bfs : ArrayBuffer[String]) extends Serializable {
+class Monster(n :  String, hp_m : Int, hp_c : Int, df : Int, dr : Int, atks : ArrayBuffer[Attack], sp : Int, t : String, bfs : ArrayBuffer[String], x : Int, y : Int, z : Int) extends Serializable {
   var name : String = n
   var hp_max : Int = hp_m
   var hp_current : Int = hp_c
   var defense : Int = df
+  var damage_reduce : Int = dr
   var attacks : ArrayBuffer[Attack] = atks
   var speed : Int = sp
   var team : String = t
   var Buffs : ArrayBuffer[String] = bfs
+  var posx : Int = x
+  var posy : Int = y
+  var posz : Int = z
 }
 
 object Main {
@@ -46,7 +50,7 @@ object Main {
     val new_attack = new Attack("FulguroPoing", armor_test_modifiers, 18, 3, 100, "ranged")
     val attacks = ArrayBuffer(new_attack)
     val buffs = ArrayBuffer("Handsome", "Justice warrior", "Alien butt kicker")
-    val new_monster = new Monster("Goldorak", 80, 70, 30, attacks, 150, "Gud guys", buffs)
+    val new_monster = new Monster("Goldorak", 80, 70, 30, 20, attacks, 150, "Gud guys", buffs, 0, 0, 0)
 
     println("dat new monster : ", new_monster.name)
 
