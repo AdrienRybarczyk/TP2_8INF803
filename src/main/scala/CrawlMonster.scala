@@ -23,6 +23,10 @@ class Monster(n :  String, hp_m : Int, hp_c : Int, df : Int, dr : Int, atks : Ar
   var posx : Int = x
   var posy : Int = y
   var posz : Int = z
+
+  override def toString: String = {
+    s"name : $name"
+  }
 }
 
 object Main {
@@ -45,14 +49,27 @@ object Main {
       println("Crawling to : ", element)
     }
     */
-    val armor_test_modifiers = ArrayBuffer(1,2,3)
+    val monster_collection = ArrayBuffer[Monster]()
 
+    val armor_test_modifiers = ArrayBuffer(1,2,3)
     val new_attack = new Attack("FulguroPoing", armor_test_modifiers, 18, 3, 100, "ranged")
     val attacks = ArrayBuffer(new_attack)
     val buffs = ArrayBuffer("Handsome", "Justice warrior", "Alien butt kicker")
     val new_monster = new Monster("Goldorak", 80, 70, 30, 20, attacks, 150, "Gud guys", buffs, 0, 0, 0)
+    monster_collection.append(new_monster)
 
-    println("dat new monster : ", new_monster.name)
+    // Solar creation
+    val solar_attacks = ArrayBuffer[Attack]()
+    val armor_test_modifiers1 = ArrayBuffer(35,30,25,20)
+    val solar_attack1 = new Attack("Greatsword", armor_test_modifiers1, 18, 3, 10, tp = "melee")
+    solar_attacks.append(solar_attack1)
+    val armor_test_modifiers2 = ArrayBuffer(31,26,21,16)
+    val solar_attack2 = new Attack("Longbow", armor_test_modifiers2, 14, 2, rng = 100, tp = "ranged")
+    solar_attacks.append(solar_attack2)
+
+    val solar_buffs = ArrayBuffer[String]()
+    val solar = new Monster("Solar", 363, 363, 44, 15, solar_attacks, sp = 50, "Good", solar_buffs, 0, 0, 0)
+    monster_collection.append(solar)
 
   }
 }
