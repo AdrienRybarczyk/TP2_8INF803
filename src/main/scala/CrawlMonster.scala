@@ -49,14 +49,8 @@ object Main {
       println("Crawling to : ", element)
     }
     */
-    val monster_collection = ArrayBuffer[Monster]()
 
-    val armor_test_modifiers = ArrayBuffer(1,2,3)
-    val new_attack = new Attack("FulguroPoing", armor_test_modifiers, 18, 3, 100, "ranged")
-    val attacks = ArrayBuffer(new_attack)
-    val buffs = ArrayBuffer("Handsome", "Justice warrior", "Alien butt kicker")
-    val new_monster = new Monster("Goldorak", 80, 70, 30, 20, attacks, 150, "Gud guys", buffs, 0, 0, 0)
-    monster_collection.append(new_monster)
+    val monster_collection = ArrayBuffer[Monster]()
 
     // Solar creation
     val solar_attacks = ArrayBuffer[Attack]()
