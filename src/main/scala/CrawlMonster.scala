@@ -1,13 +1,15 @@
 import scala.collection.mutable.ArrayBuffer
 
 
-class Attack(n : String, atm : ArrayBuffer[Int], dmg_f : Int, dmg_d : Int, rng : Int, tp : String) extends Serializable {
+class Attack(n : String, atm : ArrayBuffer[Int], dmg_f : Int, dmg_d : Int, nb_d : Int , rng : Int, tp : String, crit_mult : Int) extends Serializable {
   var name : String = n
-  var armor_test_modifiers : ArrayBuffer[Int] = atm
-  var damage_flat : Int = dmg_f
-  var damage_dices : Int = dmg_d
+  var armor_test_modifiers : ArrayBuffer[Int] = atm //degats differentes attaque de l arme
+  var damage_flat : Int = dmg_f //degats effectifs
+  var damage_dices : Int = dmg_d //valeur dé degats
+  var number_dices : Int = nb_d //nombre dé lancé pour les degats
   var range_increment : Int = rng
   var attack_type : String = tp
+  var crit_multiplier : Int = crit_mult
 }
 
 class Monster(n :  String, hp_m : Int, hp_c : Int, df : Int, dr : Int, atks : ArrayBuffer[Attack], sp : Int, t : String, bfs : ArrayBuffer[String], x : Int, y : Int, z : Int) extends Serializable {
@@ -17,7 +19,7 @@ class Monster(n :  String, hp_m : Int, hp_c : Int, df : Int, dr : Int, atks : Ar
   var defense : Int = df
   var damage_reduce : Int = dr
   var attacks : ArrayBuffer[Attack] = atks
-  var speed : Int = sp
+  var speed : Int = sp //deplacement possible en feet
   var team : String = t
   var Buffs : ArrayBuffer[String] = bfs
   var posx : Int = x
@@ -55,10 +57,10 @@ object Main {
     // Solar creation
     val solar_attacks = ArrayBuffer[Attack]()
     val armor_test_modifiers1 = ArrayBuffer(35,30,25,20)
-    val solar_attack1 = new Attack("Greatsword", armor_test_modifiers1, 18, 3, 10, tp = "melee")
+    val solar_attack1 = new Attack("Greatsword", armor_test_modifiers1, 18, 3, 2,10, tp = "melee",2)
     solar_attacks.append(solar_attack1)
     val armor_test_modifiers2 = ArrayBuffer(31,26,21,16)
-    val solar_attack2 = new Attack("Longbow", armor_test_modifiers2, 14, 2, rng = 100, tp = "ranged")
+    val solar_attack2 = new Attack("Longbow", armor_test_modifiers2, 14, 2,3, rng = 100, tp = "ranged",3)
     solar_attacks.append(solar_attack2)
 
     val solar_buffs = ArrayBuffer[String]()
