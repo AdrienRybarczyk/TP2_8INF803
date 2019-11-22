@@ -36,15 +36,134 @@ object creation extends App{
         dr = defense_stats(current_index+1).split("/")(0).toInt
       }
     }
-    println(dr)
-    //println(hp)
-    //println(defense)
-    val new_monster = new Monster(monster_name, hp, hp, defense, dr, attacks, 150, "Gud guys", buffs, 0, 0, 0)
-    return new_monster
+
+    //Team
+    var info_block = statblock.select("p").get(1)
+    var team = "B"//B for Bad
+    if (info_block.html() contains "good") {
+      team = "G"//Good
+    }
+
+    //Speed
+    var offense_block = statblock.select("p").get(5)
+    if (!(offense_block.html() contains "<b>Speed</b>")) {
+      offense_block = statblock.select("p").get(6)
+    }
+
+    val offense_stats = offense_block.text().split(" |,|;")
+    val speed = offense_stats(1).toInt
+
+    //Attacks
+    val attacks_stats = offense_block.text().split("Melee ")
+    val attack_block_tmp = attacks_stats(1)
+    val split_melee_ranged = attack_block_tmp.split("Ranged ")
+    val melee_block = split_melee_ranged(0)
+
+    val melee_attack_block: String = melee_block.split(" or ")(0)
+    val deuxieme_attack_block = melee_attack_block.split(", ")
+    var melee_detail_block = deuxieme_attack_block(0).split(" ")
+    val arrayAttack = ArrayBuffer[Attack]()
+    val i = 0
+    var weapon_name = ""
+    var damage_flat = 0
+    var number_dices = 0
+    var damage_dice = 0
+    var crit_mult = 1
+    val armor_test_modifiers = ArrayBuffer[Int]()
+    var booleanTestName = false
+    for(i <- melee_detail_block.indices){
+        if(!melee_detail_block(i)(1).isDigit && !booleanTestName){
+          weapon_name+= melee_detail_block(i) + " "
+        }else if(i != 0){
+          booleanTestName = true
+        }
+        if(melee_detail_block(i) contains "("){
+          var tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size)
+          if(melee_detail_block(i) contains ")"){
+            tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size-1)
+          }
+          if(tmp_degat contains "x"){
+            crit_mult = tmp_degat.split("x")(1).toInt
+            tmp_degat = tmp_degat.split("/")(0)
+          }
+          if(tmp_degat contains "×"){
+            crit_mult = tmp_degat.split("×")(1).toInt
+            tmp_degat = tmp_degat.split("/")(0)
+          }
+          if(tmp_degat contains "/"){
+            tmp_degat = tmp_degat.split("/")(0)
+          }
+          damage_flat = tmp_degat.split("""\+""")(1).toInt
+          val tmp_dice = tmp_degat.split("""\+""")(0)
+          number_dices = tmp_dice.split("d")(0).toInt
+          damage_dice = tmp_dice.split("d")(1).toInt
+
+        }else if(melee_detail_block(i) contains "/"){
+          val tmp_modifiers = melee_detail_block(i).split("/")
+          for(j <- tmp_modifiers){
+            val value_modifier: String = j.substring(1)
+            armor_test_modifiers+= value_modifier.toInt
+          }
+        }
+    }
+    arrayAttack+=new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, tp = "melee",crit_mult)
+
+    if(deuxieme_attack_block.size > 1){
+      booleanTestName = false
+      weapon_name = " "
+      armor_test_modifiers.clear()
+      melee_detail_block = deuxieme_attack_block(1).split(" ")
+      for(i <- melee_detail_block.indices){
+        if(!melee_detail_block(i)(1).isDigit && !booleanTestName){
+          weapon_name+= melee_detail_block(i) + " "
+        }else if(i != 0){
+          booleanTestName = true
+        }
+        if(melee_detail_block(i) contains "("){
+          var tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size)
+          if(melee_detail_block(i) contains ")"){
+            tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size-1)
+          }
+          if(tmp_degat contains "x"){
+            crit_mult = tmp_degat.split("x")(1).toInt
+            tmp_degat = tmp_degat.split("/")(0)
+          }
+          if(tmp_degat contains "×"){
+            crit_mult = tmp_degat.split("×")(1).toInt
+            tmp_degat = tmp_degat.split("/")(0)
+          }
+          if(tmp_degat contains "/"){
+            tmp_degat = tmp_degat.split("/")(0)
+          }
+          damage_flat = tmp_degat.split("""\+""")(1).toInt
+          val tmp_dice = tmp_degat.split("""\+""")(0)
+          number_dices = tmp_dice.split("d")(0).toInt
+          damage_dice = tmp_dice.split("d")(1).toInt
+
+        }else if(melee_detail_block(i) contains "/"){
+          val tmp_modifiers = melee_detail_block(i).split("/")
+          for(j <- tmp_modifiers){
+            val value_modifier: String = j.substring(1)
+            armor_test_modifiers+= value_modifier.toInt
+          }
+        }
+      }
+      arrayAttack+=new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, tp = "melee",crit_mult)
+    }
+   /*for(i <- arrayAttack.indices){
+      println(arrayAttack(i).toString)
+    }*/
+
+    println(melee_attack_block)
+
+    val ranged_block = split_melee_ranged(1)
+
+    val new_monster = new Monster(monster_name, hp, hp, defense, dr, arrayAttack, speed, team, buffs, 0, 0, 0)
+    new_monster
   }
 
   val armor_test_modifiers = ArrayBuffer(1,2,3)
-  val new_attack = new Attack("FulguroPoing", armor_test_modifiers, 18, 3,2, 100, "ranged",3)
+  val new_attack = new Attack("FulguroPoing", armor_test_modifiers, 18, 3,2, "ranged",3)
   val attacks = ArrayBuffer(new_attack)
   val buffs = ArrayBuffer("Handsome", "Justice warrior", "Alien butt kicker")
 
@@ -62,7 +181,9 @@ object creation extends App{
     for(j <- 0 until configurationCombat1(i)._2){
       val monster_name = configurationCombat1(i)._1 + " " + cpt
       val new_monster = create_monster(configurationCombat1(i)._3, monster_name)
-
+      println(new_monster.name + " hp : "+ new_monster.hp_current +" defense:  "+ new_monster.defense +
+      " damage reduce " + new_monster.damage_reduce + " attacks " + new_monster.attacks + " speed:  "
+      + new_monster.speed + " team " + new_monster.team + "  Buffs "+ new_monster.Buffs)
       tabMonster+=new_monster
       nodes+=((cpt,new_monster.name))
       cpt= cpt+1
