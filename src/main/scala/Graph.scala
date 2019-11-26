@@ -12,6 +12,54 @@ object creation extends App{
   val sc = SparkContext.getOrCreate(conf)
   sc.setLogLevel("ERROR")
 
+  def create_attack(detail_attack : Array[String]): Attack = {
+    var weapon_name = ""
+    var damage_flat = 0
+    var number_dices = 0
+    var damage_dice = 0
+    var crit_mult = 1
+    val armor_test_modifiers = ArrayBuffer[Int]()
+    var booleanTestName = false
+    for(i <- detail_attack.indices){
+      if(!detail_attack(i)(1).isDigit && !booleanTestName){
+        weapon_name+= detail_attack(i) + " "
+      }else if(i != 0){
+        booleanTestName = true
+      }
+      if(detail_attack(i) contains "("){
+        var tmp_degat = detail_attack(i).substring(1,detail_attack(i).size)
+        if(detail_attack(i) contains ")"){
+          tmp_degat = detail_attack(i).substring(1,detail_attack(i).size-1)
+        }
+        if(tmp_degat contains "x"){
+          crit_mult = tmp_degat.split("x")(1).toInt
+          tmp_degat = tmp_degat.split("/")(0)
+        }
+        if(tmp_degat contains "×"){
+          crit_mult = tmp_degat.split("×")(1).toInt
+          tmp_degat = tmp_degat.split("/")(0)
+        }
+        if(tmp_degat contains "/"){
+          tmp_degat = tmp_degat.split("/")(0)
+        }
+        if(tmp_degat contains "+"){
+          damage_flat = tmp_degat.split("""\+""")(1).toInt
+          val tmp_dice = tmp_degat.split("""\+""")(0)
+          number_dices = tmp_dice.split("d")(0).toInt
+          damage_dice = tmp_dice.split("d")(1).toInt
+        }
+      }else if(detail_attack(i) contains "/"){
+        val tmp_modifiers = detail_attack(i).split("/")
+        for(j <- tmp_modifiers){
+          val value_modifier: String = j.substring(1)
+          armor_test_modifiers+= value_modifier.toInt
+        }
+      }
+    }
+    val attack = new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, tp = "melee",crit_mult)
+    attack
+  }
+
   def create_monster(monster_url : String, monster_name : String): Monster = {
     val doc = Jsoup.connect(monster_url).get()
     val statblock = doc.select(".statblock")
@@ -63,100 +111,41 @@ object creation extends App{
     val deuxieme_attack_block = melee_attack_block.split(", ")
     var melee_detail_block = deuxieme_attack_block(0).split(" ")
     val arrayAttack = ArrayBuffer[Attack]()
-    val i = 0
-    var weapon_name = ""
-    var damage_flat = 0
-    var number_dices = 0
-    var damage_dice = 0
-    var crit_mult = 1
-    val armor_test_modifiers = ArrayBuffer[Int]()
-    var booleanTestName = false
-    for(i <- melee_detail_block.indices){
-        if(!melee_detail_block(i)(1).isDigit && !booleanTestName){
-          weapon_name+= melee_detail_block(i) + " "
-        }else if(i != 0){
-          booleanTestName = true
-        }
-        if(melee_detail_block(i) contains "("){
-          var tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size)
-          if(melee_detail_block(i) contains ")"){
-            tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size-1)
-          }
-          if(tmp_degat contains "x"){
-            crit_mult = tmp_degat.split("x")(1).toInt
-            tmp_degat = tmp_degat.split("/")(0)
-          }
-          if(tmp_degat contains "×"){
-            crit_mult = tmp_degat.split("×")(1).toInt
-            tmp_degat = tmp_degat.split("/")(0)
-          }
-          if(tmp_degat contains "/"){
-            tmp_degat = tmp_degat.split("/")(0)
-          }
-          damage_flat = tmp_degat.split("""\+""")(1).toInt
-          val tmp_dice = tmp_degat.split("""\+""")(0)
-          number_dices = tmp_dice.split("d")(0).toInt
-          damage_dice = tmp_dice.split("d")(1).toInt
 
-        }else if(melee_detail_block(i) contains "/"){
-          val tmp_modifiers = melee_detail_block(i).split("/")
-          for(j <- tmp_modifiers){
-            val value_modifier: String = j.substring(1)
-            armor_test_modifiers+= value_modifier.toInt
-          }
-        }
-    }
-    arrayAttack+=new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, tp = "melee",crit_mult)
+    val attackCac = create_attack(melee_detail_block)
+    arrayAttack+= attackCac
 
     if(deuxieme_attack_block.size > 1){
-      booleanTestName = false
-      weapon_name = " "
-      armor_test_modifiers.clear()
       melee_detail_block = deuxieme_attack_block(1).split(" ")
-      for(i <- melee_detail_block.indices){
-        if(!melee_detail_block(i)(1).isDigit && !booleanTestName){
-          weapon_name+= melee_detail_block(i) + " "
-        }else if(i != 0){
-          booleanTestName = true
-        }
-        if(melee_detail_block(i) contains "("){
-          var tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size)
-          if(melee_detail_block(i) contains ")"){
-            tmp_degat = melee_detail_block(i).substring(1,melee_detail_block(i).size-1)
-          }
-          if(tmp_degat contains "x"){
-            crit_mult = tmp_degat.split("x")(1).toInt
-            tmp_degat = tmp_degat.split("/")(0)
-          }
-          if(tmp_degat contains "×"){
-            crit_mult = tmp_degat.split("×")(1).toInt
-            tmp_degat = tmp_degat.split("/")(0)
-          }
-          if(tmp_degat contains "/"){
-            tmp_degat = tmp_degat.split("/")(0)
-          }
-          damage_flat = tmp_degat.split("""\+""")(1).toInt
-          val tmp_dice = tmp_degat.split("""\+""")(0)
-          number_dices = tmp_dice.split("d")(0).toInt
-          damage_dice = tmp_dice.split("d")(1).toInt
-
-        }else if(melee_detail_block(i) contains "/"){
-          val tmp_modifiers = melee_detail_block(i).split("/")
-          for(j <- tmp_modifiers){
-            val value_modifier: String = j.substring(1)
-            armor_test_modifiers+= value_modifier.toInt
-          }
-        }
-      }
-      arrayAttack+=new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, tp = "melee",crit_mult)
+      val SecondAttackCac = create_attack(melee_detail_block)
+      arrayAttack+= SecondAttackCac
     }
+
    /*for(i <- arrayAttack.indices){
       println(arrayAttack(i).toString)
     }*/
 
-    println(melee_attack_block)
+    //println(melee_attack_block)
 
-    val ranged_block = split_melee_ranged(1)
+    var ranged_block = split_melee_ranged(1)
+    if (ranged_block contains "Special Attacks") {
+      ranged_block = ranged_block.split("Special Attacks")(0)
+    }
+    if (ranged_block contains "plus") {
+      ranged_block = ranged_block.split("plus")(0)
+      ranged_block = ranged_block+")"
+      ranged_block = ranged_block.replace(" )",")")
+    }
+    val indexParenthese = ranged_block.indexOf("(")
+    if(ranged_block.indexOf("(",indexParenthese+1)!= -1){
+      val endFirstParenthese = ranged_block.indexOf(")")
+      ranged_block = ranged_block.substring(0,indexParenthese) + ranged_block.substring(endFirstParenthese+1)
+      ranged_block = ranged_block.replace("  "," ")
+    }
+    //println(ranged_block)
+    val ranged_detail_block = ranged_block.split(" ")
+    val attackDistance = create_attack(ranged_detail_block)
+    arrayAttack+= attackDistance
 
     val new_monster = new Monster(monster_name, hp, hp, defense, dr, arrayAttack, speed, team, buffs, 0, 0, 0)
     new_monster
