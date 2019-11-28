@@ -2,7 +2,6 @@ import org.apache.spark._
 import org.apache.spark.rdd.RDD
 
 import scala.collection.mutable.ArrayBuffer
-// import classes required for using GraphX
 import org.apache.spark.graphx._
 import org.jsoup.Jsoup
 
@@ -12,7 +11,7 @@ object creation extends App{
   val sc = SparkContext.getOrCreate(conf)
   sc.setLogLevel("ERROR")
 
-  def create_attack(detail_attack : Array[String]): Attack = {
+  def create_attack(detail_attack : Array[String], type_weapon : String): Attack = {
     var weapon_name = ""
     var damage_flat = 0
     var number_dices = 0
@@ -27,9 +26,9 @@ object creation extends App{
         booleanTestName = true
       }
       if(detail_attack(i) contains "("){
-        var tmp_degat = detail_attack(i).substring(1,detail_attack(i).size)
+        var tmp_degat = detail_attack(i).substring(1,detail_attack(i).length)
         if(detail_attack(i) contains ")"){
-          tmp_degat = detail_attack(i).substring(1,detail_attack(i).size-1)
+          tmp_degat = detail_attack(i).substring(1,detail_attack(i).length-1)
         }
         if(tmp_degat contains "x"){
           crit_mult = tmp_degat.split("x")(1).toInt
@@ -47,6 +46,9 @@ object creation extends App{
           val tmp_dice = tmp_degat.split("""\+""")(0)
           number_dices = tmp_dice.split("d")(0).toInt
           damage_dice = tmp_dice.split("d")(1).toInt
+        }else{
+          number_dices = tmp_degat.split("d")(0).toInt
+          damage_dice = tmp_degat.split("d")(1).toInt
         }
       }else if(detail_attack(i) contains "/"){
         val tmp_modifiers = detail_attack(i).split("/")
@@ -54,9 +56,18 @@ object creation extends App{
           val value_modifier: String = j.substring(1)
           armor_test_modifiers+= value_modifier.toInt
         }
+      }else if(detail_attack(i) contains "+"){
+        if(i>0){
+          armor_test_modifiers+= detail_attack(i).split("""\+""")(1).toInt
+        }
       }
     }
-    val attack = new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, tp = "melee",crit_mult)
+    /*println("Attack " + weapon_name + " damage flat: " + damage_flat, " damage_dice " + damage_dice
+    + " number_dices " + number_dices + " crit_mult " + crit_mult)
+    for(j <- armor_test_modifiers){
+      println(j)
+    }*/
+    val attack = new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, type_weapon,crit_mult)
     attack
   }
 
@@ -86,7 +97,7 @@ object creation extends App{
     }
 
     //Team
-    var info_block = statblock.select("p").get(1)
+    val info_block = statblock.select("p").get(1)
     var team = "B"//B for Bad
     if (info_block.html() contains "good") {
       team = "G"//Good
@@ -112,12 +123,12 @@ object creation extends App{
     var melee_detail_block = deuxieme_attack_block(0).split(" ")
     val arrayAttack = ArrayBuffer[Attack]()
 
-    val attackCac = create_attack(melee_detail_block)
+    val attackCac = create_attack(melee_detail_block, "melee")
     arrayAttack+= attackCac
 
     if(deuxieme_attack_block.size > 1){
       melee_detail_block = deuxieme_attack_block(1).split(" ")
-      val SecondAttackCac = create_attack(melee_detail_block)
+      val SecondAttackCac = create_attack(melee_detail_block, "melee")
       arrayAttack+= SecondAttackCac
     }
 
@@ -144,7 +155,7 @@ object creation extends App{
     }
     //println(ranged_block)
     val ranged_detail_block = ranged_block.split(" ")
-    val attackDistance = create_attack(ranged_detail_block)
+    val attackDistance = create_attack(ranged_detail_block, "ranged")
     arrayAttack+= attackDistance
 
     val new_monster = new Monster(monster_name, hp, hp, defense, dr, arrayAttack, speed, team, buffs, 0, 0, 0)
