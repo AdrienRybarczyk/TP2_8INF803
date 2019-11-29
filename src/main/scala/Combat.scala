@@ -15,4 +15,14 @@ class Combat{
     }
     degatEff
   }
+
+  def distance(monster1 : Monster, monster2 : Monster):Int = {
+    val distance = Math.sqrt(
+      (monster1.posy - monster2.posy)  * (monster1.posy - monster2.posy)
+        + (monster1.posx - monster2.posx)  * (monster1.posx - monster2.posx)
+    ).toInt
+    distance
+  }
+
+
 }

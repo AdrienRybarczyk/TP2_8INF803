@@ -5,6 +5,23 @@ import scala.collection.mutable.ArrayBuffer
 import org.apache.spark.graphx._
 import org.jsoup.Jsoup
 
+class node(var id_m : Int, var m: Monster, len : Int )extends Serializable
+{
+  var id: Int = id_m
+  var monster: Monster = m
+  var taille : Int = len
+  var adjlist = new Array[Int](taille)
+
+  def printadjlist: String = {
+    var output = "adjlist : "
+    adjlist.foreach(output += _)
+    output
+  }
+
+  override def toString: String = {
+    s" $monster"
+  }
+}
 
 object creation extends App{
   val conf = new SparkConf().setAppName("Creation Graphe").setMaster("local[*]")
@@ -67,7 +84,13 @@ object creation extends App{
     for(j <- armor_test_modifiers){
       println(j)
     }*/
-    val attack = new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, type_weapon,crit_mult)
+    var range = 0
+    if(type_weapon == "melee"){
+      range = 10
+    }else if(type_weapon == ""){
+      range = 100
+    }
+    val attack = new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, type_weapon,crit_mult, range)
     attack
   }
 
@@ -135,7 +158,6 @@ object creation extends App{
    /*for(i <- arrayAttack.indices){
       println(arrayAttack(i).toString)
     }*/
-
     //println(melee_attack_block)
 
     var ranged_block = split_melee_ranged(1)
@@ -158,23 +180,36 @@ object creation extends App{
     val attackDistance = create_attack(ranged_detail_block, "ranged")
     arrayAttack+= attackDistance
 
-    val new_monster = new Monster(monster_name, hp, hp, defense, dr, arrayAttack, speed, team, buffs, 0, 0, 0)
+    var x,y,z = 0
+    val r = new scala.util.Random
+    x = r.nextInt(125)
+    if(team == "G"){//equipe gentille elle sera dans la moitie 0 - 125 en x
+      y = r.nextInt(250)
+      z = 0
+    }else{//equipe mechant elle sera a 110 ft en x de la team gentille
+      x = x + 110
+      y = r.nextInt(250)
+      z = 0
+    }
+
+    val new_monster = new Monster(monster_name, hp, hp, defense, dr, arrayAttack, speed, team, buffs, x, y, z)
     new_monster
   }
 
-  val armor_test_modifiers = ArrayBuffer(1,2,3)
-  val new_attack = new Attack("FulguroPoing", armor_test_modifiers, 18, 3,2, "ranged",3)
-  val attacks = ArrayBuffer(new_attack)
   val buffs = ArrayBuffer("Handsome", "Justice warrior", "Alien butt kicker")
 
   var tabMonster = ArrayBuffer[Monster]()
-  var nodes = ArrayBuffer[(VertexId, String)]()
-  val edges = Array(Edge(1L,2L,1800),Edge(2L,3L,800),Edge(3L,1L,1400))
+  var nodes = ArrayBuffer[(VertexId,node)]()
 
   var configurationCombat1 = Array( ("Solar",1,"https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/angel/solar/"),
                                     ("Worgs Rider",9,"https://www.d20pfsrd.com/bestiary/npc-s/npcs-cr-1/orc-worg-rider/"),
                                     ("Le Warlord",1,"https://www.d20pfsrd.com/bestiary/npc-s/npcs-cr-12/brutal-warlord-half-orc-fighter-13/"),
                                     ("Barbares Orc",4,"https://www.d20pfsrd.com/bestiary/npc-s/npcs-cr-10/double-axe-fury-half-orc-barbarian-11/"))
+
+  var nbElement = 0
+  for(i <- configurationCombat1.indices){
+    nbElement = nbElement + configurationCombat1(i)._2
+  }
   var cpt = 0
   val i,j = 0
   for(i <- configurationCombat1.indices){
@@ -185,24 +220,46 @@ object creation extends App{
       " damage reduce " + new_monster.damage_reduce + " attacks " + new_monster.attacks + " speed:  "
       + new_monster.speed + " team " + new_monster.team + "  Buffs "+ new_monster.Buffs)
       tabMonster+=new_monster
-      nodes+=((cpt,new_monster.name))
+      val node =new node(cpt, new_monster, nbElement)
+      nodes +=((cpt, node ))
       cpt= cpt+1
     }
   }
-  /*for(i <- nodes.indices){
+  for(i <- nodes.indices){
     println(nodes(i).toString)
-  }*/
+  }
 
-  //val value = Math.sqrt(Math.abs(y2 - y1) + Math.abs(x2 - x1))
+  println("FIN CREATION NODE")
+
+  val edges = ArrayBuffer[Edge[PartitionID]]()
+  for(i <- nodes.indices){
+    if(nodes(i)._2.monster.team == "G"){//On crée les edges a partir des monstres gentils
+      for(j <- nodes.indices){
+        if(nodes(i) != nodes(j)){
+          val distance = Math.sqrt(
+           (nodes(j)._2.monster.posy - nodes(i)._2.monster.posy)  * (nodes(j)._2.monster.posy - nodes(i)._2.monster.posy)
+           + (nodes(j)._2.monster.posx - nodes(i)._2.monster.posx)  * (nodes(j)._2.monster.posx - nodes(i)._2.monster.posx)
+           ).toInt
+          edges+=Edge(nodes(i)._1, nodes(j)._1,distance)
+          nodes(i)._2.adjlist(j) = 1
+          nodes(j)._2.adjlist(i) = 1
+        }
+      }
+    }
+  }
 
   // create vertices RDD with ID and Name
-  val vRDD: RDD[(VertexId, String)] = sc.parallelize(nodes)
+  val vRDD: RDD[(VertexId, node)] = sc.parallelize(nodes)
   val eRDD: RDD[Edge[PartitionID]] = sc.parallelize(edges)
 
   // define the graph
   val graph = Graph(vRDD,eRDD)
+
+  /*for(i <- nodes.indices){
+    println(nodes(i)._2.printadjlist)
+  }*/
   // graph vertices
-  graph.vertices.collect.foreach(println)
+ //graph.vertices.collect.foreach(println)
   // graph edges
   graph.edges.collect.foreach(println)
 }
