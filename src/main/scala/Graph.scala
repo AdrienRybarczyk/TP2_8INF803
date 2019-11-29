@@ -87,7 +87,7 @@ object creation extends App{
     var range = 0
     if(type_weapon == "melee"){
       range = 10
-    }else if(type_weapon == ""){
+    }else if(type_weapon == "ranged"){
       range = 100
     }
     val attack = new Attack(weapon_name, armor_test_modifiers, damage_flat, damage_dice, number_dices, type_weapon,crit_mult, range)
@@ -183,10 +183,10 @@ object creation extends App{
     var x,y,z = 0
     val r = new scala.util.Random
     x = r.nextInt(125)
-    if(team == "G"){//equipe gentille elle sera dans la moitie 0 - 125 en x
+    if(team == "G"){//équipe gentille elle sera dans la moitié 0 - 125 en x
       y = r.nextInt(250)
       z = 0
-    }else{//equipe mechant elle sera a 110 ft en x de la team gentille
+    }else{//équipe méchante elle sera à 110 ft en x de la team gentille
       x = x + 110
       y = r.nextInt(250)
       z = 0
