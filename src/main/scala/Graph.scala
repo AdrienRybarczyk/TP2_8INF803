@@ -11,6 +11,7 @@ class node(var id_m : Int, var m: Monster, len : Int )extends Serializable
   var monster: Monster = m
   var taille : Int = len
   var adjlist = new Array[Int](taille)
+  var nearestEnnemy: Option[Monster] = None : Option[Monster]
 
   def printadjlist: String = {
     var output = "adjlist : "
@@ -199,7 +200,9 @@ object creation extends App{
   val buffs = ArrayBuffer("Handsome", "Justice warrior", "Alien butt kicker")
 
   var tabMonster = ArrayBuffer[Monster]()
+  var tabMonsterDead = ArrayBuffer[Monster]()
   var nodes = ArrayBuffer[(VertexId,node)]()
+  val combat = new Combat()
 
   var configurationCombat1 = Array( ("Solar",1,"https://www.d20pfsrd.com/bestiary/monster-listings/outsiders/angel/solar/"),
                                     ("Worgs Rider",9,"https://www.d20pfsrd.com/bestiary/npc-s/npcs-cr-1/orc-worg-rider/"),
@@ -249,7 +252,7 @@ object creation extends App{
   }
 
   // create vertices RDD with ID and Name
-  val vRDD: RDD[(VertexId, node)] = sc.parallelize(nodes)
+  var vRDD: RDD[(VertexId, node)] = sc.parallelize(nodes)
   val eRDD: RDD[Edge[PartitionID]] = sc.parallelize(edges)
 
   // define the graph
@@ -258,8 +261,105 @@ object creation extends App{
   /*for(i <- nodes.indices){
     println(nodes(i)._2.printadjlist)
   }*/
+
+  //vRDD.collect.foreach( println(_))
   // graph vertices
  //graph.vertices.collect.foreach(println)
   // graph edges
   graph.edges.collect.foreach(println)
+
+  println("début map " + vRDD.collect().length)
+
+  @scala.annotation.tailrec
+  def loop(cpt: Int): Unit = {
+    vRDD = vRDD.map(n => {
+      var tmp = n
+      var nearestEnnemy = None: Option[Monster]
+      for (i <- tmp._2.adjlist.indices) {
+        var adjacent = tmp._2.adjlist(i)
+        if (adjacent == 1) {
+          if (nearestEnnemy.isEmpty) {
+            nearestEnnemy = Some(tabMonster(i))
+          } else {
+            var otherEnemy = tabMonster(i)
+            var distanceNearestEnnemy = distance(tmp._2.monster, nearestEnnemy.get)
+            var distanceOtherEnemy = distance(tmp._2.monster, otherEnemy)
+            if (distanceOtherEnemy < distanceNearestEnnemy) {
+              nearestEnnemy = Some(otherEnemy)
+            }
+          }
+        }
+      }
+      if (nearestEnnemy.isDefined) {
+        tmp._2.nearestEnnemy = nearestEnnemy
+      }
+      tmp
+    })
+    //vRDD.localCheckpoint()  //on sauve une copie de ce RDD en mémoire. Les prochains calculs qui l'utilisent partiront de celui-ci.
+    println("Check pour fin")
+    var arrayCombat: Array[(VertexId, node)] = vRDD.collect()
+    //vRDD.collect.foreach(e => print( e._2.nearestEnnemy.get + "\n"))
+
+    println(Console.WHITE + "########")
+    println("Tour "+ cpt)
+    println("########")
+
+    println("***** Actions réalisées *****")
+    for(i <- arrayCombat.indices){
+      val enemy = arrayCombat(i)._2.nearestEnnemy.get
+      val actionUse: (PartitionID, PartitionID) = combat.bestMove(arrayCombat(i)._2.monster, arrayCombat(i)._2.nearestEnnemy.get)
+      if(actionUse._2 != -1){
+        var enemyInArray: (VertexId, node) = arrayCombat(i)
+        for(j <- arrayCombat.indices){
+          if(arrayCombat(j)._2.monster.name == arrayCombat(i)._2.nearestEnnemy.get.name){
+            enemyInArray = arrayCombat(j)
+          }
+        }
+        enemy.hp_current = actionUse._1
+        val indiceEnemy = arrayCombat.indexOf(enemyInArray)
+
+        if(enemy.hp_current == 0){
+          arrayCombat(i)._2.nearestEnnemy = None
+          arrayCombat(i)._2.adjlist(indiceEnemy) = 0
+          arrayCombat(indiceEnemy)._2.monster.hp_current = 0
+          tabMonsterDead+= enemy
+        }else{
+          arrayCombat(indiceEnemy)._2.monster.hp_current = enemy.hp_current
+        }
+      }else{
+        arrayCombat(i)._2.monster.deplacer(enemy.posx,enemy.posy)
+      }
+      arrayCombat(i)._2.nearestEnnemy = None
+    }
+    arrayCombat = arrayCombat.filter(_._2.monster.hp_current != 0)
+
+    println("\n***** Status *****")
+
+    println("\nEn vie: ")
+    for(i <- arrayCombat.indices){
+      println(Console.BLUE + arrayCombat(i)._2.monster.name +" : " + Console.GREEN + arrayCombat(i)._2.monster.hp_current + "/" + arrayCombat(i)._2.monster.hp_max +
+        " HP" + Console.WHITE + " position: (" + arrayCombat(i)._2.monster.posx + ", " +arrayCombat(i)._2.monster.posy + ", " +  arrayCombat(i)._2.monster.posz + ")"
+      )
+    }
+
+    println("\nMort: ")
+    for(i <- tabMonsterDead.indices){
+      println(Console.BLUE + tabMonsterDead(i).name + Console.WHITE)
+    }
+
+    vRDD = sc.parallelize(arrayCombat)
+    if (tabMonster.isEmpty || cpt == 10) return
+
+    loop(cpt+1)
+  }
+
+  loop(1)
+
+  def distance(monster1 : Monster, monster2 : Monster):Int = {
+    val distance = Math.sqrt(
+      (monster1.posy - monster2.posy)  * (monster1.posy - monster2.posy)
+        + (monster1.posx - monster2.posx)  * (monster1.posx - monster2.posx)
+    ).toInt
+    distance
+  }
 }

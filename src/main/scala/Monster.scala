@@ -32,4 +32,47 @@ class Monster(n :  String, hp_m : Int, hp_c : Int, df : Int, dr : Int, atks : Ar
   override def toString: String = {
     s"name : $name"
   }
+
+  def deplacer(posXdest : Int, posYdest : Int): Unit ={
+    var deplacement = speed
+    if (posx > posXdest) {
+      if((posx - deplacement) > posXdest) {
+        posx -= deplacement
+        deplacement = 0
+      }else{
+        posx -= deplacement/2
+        deplacement = deplacement/2
+      }
+    }else if (posx < posXdest){
+      if((posx + deplacement) < posXdest) {
+        posx += deplacement
+        deplacement = 0
+      }else{
+        posx += deplacement/2
+        deplacement = deplacement/2
+      }
+    }
+    if(deplacement > 0){
+      if (posy > posYdest) {
+        if((posy - deplacement) > posYdest) {
+          posy -= deplacement
+          deplacement = 0
+        }else{
+          posy -= deplacement/2
+          deplacement = deplacement/2
+        }
+      }else if (posy < posYdest){
+        if((posy + deplacement) < posYdest) {
+          posy += deplacement
+          deplacement = 0
+        }else{
+          posy += deplacement/2
+          deplacement = deplacement/2
+        }
+      }
+    }
+   // println("Déplacement de " + Console.BLUE + name + Console.WHITE +
+   //   " vers " + Console.GREEN + posx + " ," + posy + Console.WHITE)
+  }
+
 }
