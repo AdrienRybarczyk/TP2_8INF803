@@ -80,11 +80,6 @@ object creation extends App{
         }
       }
     }
-    /*println("Attack " + weapon_name + " damage flat: " + damage_flat, " damage_dice " + damage_dice
-    + " number_dices " + number_dices + " crit_mult " + crit_mult)
-    for(j <- armor_test_modifiers){
-      println(j)
-    }*/
     var range = 0
     if(type_weapon == "melee"){
       range = 10
@@ -156,11 +151,6 @@ object creation extends App{
       arrayAttack+= SecondAttackCac
     }
 
-   /*for(i <- arrayAttack.indices){
-      println(arrayAttack(i).toString)
-    }*/
-    //println(melee_attack_block)
-
     var ranged_block = split_melee_ranged(1)
     if (ranged_block contains "Special Attacks") {
       ranged_block = ranged_block.split("Special Attacks")(0)
@@ -176,7 +166,6 @@ object creation extends App{
       ranged_block = ranged_block.substring(0,indexParenthese) + ranged_block.substring(endFirstParenthese+1)
       ranged_block = ranged_block.replace("  "," ")
     }
-    //println(ranged_block)
     val ranged_detail_block = ranged_block.split(" ")
     val attackDistance = create_attack(ranged_detail_block, "ranged")
     arrayAttack+= attackDistance
@@ -228,22 +217,11 @@ object creation extends App{
       cpt= cpt+1
     }
   }
-  for(i <- nodes.indices){
-    println(nodes(i).toString)
-  }
 
-  println("FIN CREATION NODE")
-
-  val edges = ArrayBuffer[Edge[PartitionID]]()
   for(i <- nodes.indices){
     if(nodes(i)._2.monster.team == "G"){//On crée les edges a partir des monstres gentils
       for(j <- nodes.indices){
         if(nodes(i) != nodes(j)){
-          val distance = Math.sqrt(
-           (nodes(j)._2.monster.posy - nodes(i)._2.monster.posy)  * (nodes(j)._2.monster.posy - nodes(i)._2.monster.posy)
-           + (nodes(j)._2.monster.posx - nodes(i)._2.monster.posx)  * (nodes(j)._2.monster.posx - nodes(i)._2.monster.posx)
-           ).toInt
-          edges+=Edge(nodes(i)._1, nodes(j)._1,distance)
           nodes(i)._2.adjlist(j) = 1
           nodes(j)._2.adjlist(i) = 1
         }
@@ -253,22 +231,6 @@ object creation extends App{
 
   // create vertices RDD with ID and Name
   var vRDD: RDD[(VertexId, node)] = sc.parallelize(nodes)
-  val eRDD: RDD[Edge[PartitionID]] = sc.parallelize(edges)
-
-  // define the graph
-  val graph = Graph(vRDD,eRDD)
-
-  /*for(i <- nodes.indices){
-    println(nodes(i)._2.printadjlist)
-  }*/
-
-  //vRDD.collect.foreach( println(_))
-  // graph vertices
- //graph.vertices.collect.foreach(println)
-  // graph edges
-  graph.edges.collect.foreach(println)
-
-  println("début map " + vRDD.collect().length)
 
   @scala.annotation.tailrec
   def loop(cpt: Int): Unit = {
@@ -277,14 +239,14 @@ object creation extends App{
       var nearestEnnemy = None: Option[Monster]
       for (i <- tmp._2.adjlist.indices) {
         var adjacent = tmp._2.adjlist(i)
-        if (adjacent == 1) {
+        if (adjacent == 1 && tabMonster(i).hp_current != 0) {
           if (nearestEnnemy.isEmpty) {
             nearestEnnemy = Some(tabMonster(i))
           } else {
             var otherEnemy = tabMonster(i)
-            var distanceNearestEnnemy = distance(tmp._2.monster, nearestEnnemy.get)
+            var distanceNearestEnemy = distance(tmp._2.monster, nearestEnnemy.get)
             var distanceOtherEnemy = distance(tmp._2.monster, otherEnemy)
-            if (distanceOtherEnemy < distanceNearestEnnemy) {
+            if (distanceOtherEnemy < distanceNearestEnemy) {
               nearestEnnemy = Some(otherEnemy)
             }
           }
@@ -296,9 +258,7 @@ object creation extends App{
       tmp
     })
     //vRDD.localCheckpoint()  //on sauve une copie de ce RDD en mémoire. Les prochains calculs qui l'utilisent partiront de celui-ci.
-    println("Check pour fin")
     var arrayCombat: Array[(VertexId, node)] = vRDD.collect()
-    //vRDD.collect.foreach(e => print( e._2.nearestEnnemy.get + "\n"))
 
     println(Console.WHITE + "########")
     println("Tour "+ cpt)
@@ -306,30 +266,40 @@ object creation extends App{
 
     println("***** Actions réalisées *****")
     for(i <- arrayCombat.indices){
-      val enemy = arrayCombat(i)._2.nearestEnnemy.get
-      val actionUse: (PartitionID, PartitionID) = combat.bestMove(arrayCombat(i)._2.monster, arrayCombat(i)._2.nearestEnnemy.get)
-      if(actionUse._2 != -1){
-        var enemyInArray: (VertexId, node) = arrayCombat(i)
-        for(j <- arrayCombat.indices){
-          if(arrayCombat(j)._2.monster.name == arrayCombat(i)._2.nearestEnnemy.get.name){
-            enemyInArray = arrayCombat(j)
-          }
-        }
-        enemy.hp_current = actionUse._1
-        val indiceEnemy = arrayCombat.indexOf(enemyInArray)
+      if(arrayCombat(i)._2.nearestEnnemy != None){
+        val enemy = arrayCombat(i)._2.nearestEnnemy.get
 
-        if(enemy.hp_current == 0){
-          arrayCombat(i)._2.nearestEnnemy = None
-          arrayCombat(i)._2.adjlist(indiceEnemy) = 0
-          arrayCombat(indiceEnemy)._2.monster.hp_current = 0
-          tabMonsterDead+= enemy
+        val actionUse: (PartitionID, PartitionID) = combat.bestMove(arrayCombat(i)._2.monster, arrayCombat(i)._2.nearestEnnemy.get)
+        if(actionUse._2 != -1){
+          var enemyInArray: (VertexId, node) = arrayCombat(i)
+          var IndexEnemyInTabMonster = -1
+          for(j <- arrayCombat.indices){
+            if(arrayCombat(j)._2.monster.name == arrayCombat(i)._2.nearestEnnemy.get.name){
+              enemyInArray = arrayCombat(j)
+            }
+          }
+          for(h <- tabMonster.indices){
+            if(tabMonster(h).name == arrayCombat(i)._2.nearestEnnemy.get.name){
+              IndexEnemyInTabMonster = h
+            }
+          }
+
+          if(IndexEnemyInTabMonster != -1) {
+            enemy.hp_current = actionUse._1
+            val indiceEnemy = arrayCombat.indexOf(enemyInArray)
+            arrayCombat(indiceEnemy)._2.monster.hp_current = enemy.hp_current
+            tabMonster(IndexEnemyInTabMonster).hp_current = enemy.hp_current
+            if (enemy.hp_current == 0) {
+              arrayCombat(i)._2.nearestEnnemy = None
+              arrayCombat(i)._2.adjlist(IndexEnemyInTabMonster) = 0
+              tabMonsterDead += enemy
+            }
+          }
         }else{
-          arrayCombat(indiceEnemy)._2.monster.hp_current = enemy.hp_current
+          arrayCombat(i)._2.monster.deplacer(enemy.posx,enemy.posy)
         }
-      }else{
-        arrayCombat(i)._2.monster.deplacer(enemy.posx,enemy.posy)
+        arrayCombat(i)._2.nearestEnnemy = None
       }
-      arrayCombat(i)._2.nearestEnnemy = None
     }
     arrayCombat = arrayCombat.filter(_._2.monster.hp_current != 0)
 
@@ -348,12 +318,14 @@ object creation extends App{
     }
 
     vRDD = sc.parallelize(arrayCombat)
-    if (tabMonster.isEmpty || cpt == 10) return
+    if (arrayCombat.length == 1 || cpt == 40) return
 
     loop(cpt+1)
   }
 
   loop(1)
+
+  println("Fin du combat")
 
   def distance(monster1 : Monster, monster2 : Monster):Int = {
     val distance = Math.sqrt(
