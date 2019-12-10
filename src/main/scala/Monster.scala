@@ -71,8 +71,8 @@ class Monster(n :  String, hp_m : Int, hp_c : Int, df : Int, dr : Int, atks : Ar
         }
       }
     }
-   // println("Déplacement de " + Console.BLUE + name + Console.WHITE +
-   //   " vers " + Console.GREEN + posx + " ," + posy + Console.WHITE)
+    println("Déplacement de " + Console.BLUE + name + Console.WHITE +
+     " vers " + Console.GREEN + posx + ", " + posy + Console.WHITE)
   }
 
 }

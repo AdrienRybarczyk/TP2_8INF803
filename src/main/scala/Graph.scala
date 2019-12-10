@@ -186,7 +186,7 @@ object creation extends App{
     new_monster
   }
 
-  val buffs = ArrayBuffer("Handsome", "Justice warrior", "Alien butt kicker")
+  val buffs = ArrayBuffer[String]()
 
   var tabMonster = ArrayBuffer[Monster]()
   var tabMonsterDead = ArrayBuffer[Monster]()
@@ -232,6 +232,7 @@ object creation extends App{
   // create vertices RDD with ID and Name
   var vRDD: RDD[(VertexId, node)] = sc.parallelize(nodes)
 
+  //loop for communication and fight
   @scala.annotation.tailrec
   def loop(cpt: Int): Unit = {
     vRDD = vRDD.map(n => {
@@ -257,8 +258,7 @@ object creation extends App{
       }
       tmp
     })
-    //vRDD.localCheckpoint()  //on sauve une copie de ce RDD en mémoire. Les prochains calculs qui l'utilisent partiront de celui-ci.
-    var arrayCombat: Array[(VertexId, node)] = vRDD.collect()
+   var arrayCombat: Array[(VertexId, node)] = vRDD.collect()
 
     println(Console.WHITE + "########")
     println("Tour "+ cpt)
@@ -266,7 +266,7 @@ object creation extends App{
 
     println("***** Actions réalisées *****")
     for(i <- arrayCombat.indices){
-      if(arrayCombat(i)._2.nearestEnnemy != None){
+      if(arrayCombat(i)._2.nearestEnnemy.isDefined){
         val enemy = arrayCombat(i)._2.nearestEnnemy.get
 
         val actionUse: (PartitionID, PartitionID) = combat.bestMove(arrayCombat(i)._2.monster, arrayCombat(i)._2.nearestEnnemy.get)
@@ -327,6 +327,7 @@ object creation extends App{
 
   println("Fin du combat")
 
+  //calcul distance entre 2 monstres
   def distance(monster1 : Monster, monster2 : Monster):Int = {
     val distance = Math.sqrt(
       (monster1.posy - monster2.posy)  * (monster1.posy - monster2.posy)

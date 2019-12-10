@@ -2,6 +2,7 @@ import scala.collection.mutable.ArrayBuffer
 
 class Combat extends Serializable {
 
+  //calcul des dégats d'une attaque d'un monstre
   def degats(attackingMonster : Monster, attaque : Attack, ennemi: Monster, attaqueNumber : Int): Int = {
     val De = scala.util.Random
     val valueDe: Int = De.nextInt(21)
@@ -37,6 +38,7 @@ class Combat extends Serializable {
     degatEff
   }
 
+  //calcul distance entre 2 monstres
   def distance(monster1 : Monster, monster2 : Monster):Int = {
     val distance = Math.sqrt(
       (monster1.posy - monster2.posy)  * (monster1.posy - monster2.posy)
@@ -73,6 +75,7 @@ class Combat extends Serializable {
     (hp_current, nbAttackRest)
   }
 
+  //utilisation des différentes attaques pour une attaque donnée contre un monstre
   def useAttack(attackingMonster : Monster, DefenseMonster : Monster, attack : Attack):(Int,Int) ={
     var nbAttackUse = 0
     var degatEff = 0
@@ -89,8 +92,4 @@ class Combat extends Serializable {
     }
     (DefenseMonster.hp_current,nbAttackUse)
   }
-
-
-
-
 }
