@@ -17,4 +17,6 @@ assemblyMergeStrategy in assembly := {
   case PathList("META-INF", xs @ _*) => MergeStrategy.discard
   case x => MergeStrategy.first
 }
-
+// For crawling
+resolvers += "jitpack" at "https://jitpack.io"
+libraryDependencies += "com.github.gaocegege" % "scrala" % "0.1.5"
