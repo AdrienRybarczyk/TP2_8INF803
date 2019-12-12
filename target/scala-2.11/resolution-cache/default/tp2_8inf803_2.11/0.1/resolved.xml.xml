@@ -4,7 +4,7 @@
 		module="tp2_8inf803_2.11"
 		revision="0.1"
 		status="integration"
-		publication="20191108141430"
+		publication="20191212164904"
 	>
 		<description>
 		TP2_8INF803
@@ -35,5 +35,6 @@
 		<dependency org="org.apache.spark" name="spark-sql_2.11" rev="2.4.4" conf="compile->default(compile)"/>
 		<dependency org="org.apache.spark" name="spark-graphx_2.11" rev="2.4.4" conf="compile->default(compile)"/>
 		<dependency org="org.jsoup" name="jsoup" rev="1.12.1" conf="compile->default(compile)"/>
+		<dependency org="com.github.gaocegege" name="scrala" rev="0.1.5" conf="compile->default(compile)"/>
 	</dependencies>
 </ivy-module>

@@ -4,7 +4,7 @@
 		module="tp2_8inf803-build"
 		revision="0.1.0-SNAPSHOT"
 		status="integration"
-		publication="20191108141239"
+		publication="20191212164837"
 		e:sbtVersion="1.0" e:scalaVersion="2.12"
 	>
 		<description>
