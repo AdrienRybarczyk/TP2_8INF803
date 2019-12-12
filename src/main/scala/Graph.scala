@@ -219,7 +219,7 @@ object creation extends App{
   }
 
   for(i <- nodes.indices){
-    if(nodes(i)._2.monster.team == "G"){//On crée les edges a partir des monstres gentils
+    if(nodes(i)._2.monster.team == "G"){//On crée la liste d'adjacent
       for(j <- nodes.indices){
         if(nodes(i) != nodes(j)){
           nodes(i)._2.adjlist(j) = 1

@@ -5,7 +5,7 @@ class Combat extends Serializable {
   //calcul des dégats d'une attaque d'un monstre
   def degats(attackingMonster : Monster, attaque : Attack, ennemi: Monster, attaqueNumber : Int): Int = {
     val De = scala.util.Random
-    val valueDe: Int = De.nextInt(21)
+    val valueDe: Int = De.nextInt(20) + 1
     var degatEff = 0
 
     if(valueDe == 20){
@@ -17,7 +17,7 @@ class Combat extends Serializable {
       " avec " + Console.YELLOW + attaque.name + Console.WHITE +
       "contre " + Console.BLUE + ennemi.name +
       Console.WHITE + " : " + Console.RED + degatEff + " dégâts" + Console.WHITE)
-    }else if(valueDe == 0){
+    }else if(valueDe == 1){
       degatEff = 0
 
       println("Echec critique de " + Console.BLUE + attackingMonster.name + Console.WHITE +
