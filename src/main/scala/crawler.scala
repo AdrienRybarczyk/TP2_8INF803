@@ -1,4 +1,4 @@
-/*import com.gaocegege.scrala.core.spider.impl.DefaultSpider
+import com.gaocegege.scrala.core.spider.impl.DefaultSpider
 import com.gaocegege.scrala.core.common.response.Response
 import java.io.{BufferedReader, File, FileWriter, InputStreamReader}
 
@@ -9,10 +9,8 @@ class TestSpider extends DefaultSpider {
 
   var startUrl = List[String]()
   def parse(response: HttpResponse): Unit = {
-
     val links = (response getContentParser) select ("a")
     for (i <- 0 to links.size() - 1) {
-
       val link=links.get(i)attr("href")
       if (link.split("/").length>=7 &(link.contains("bestiary/monster-listings/aberrations/")| link.contains("bestiary/monster-listings/animals")| link.contains("bestiary/monster-listings/constructs")|
         link.contains("bestiary/monster-listings/dragons")| link.contains("bestiary/monster-listings/fey")| link.contains("bestiary/monster-listings/humanoids")|
@@ -23,15 +21,12 @@ class TestSpider extends DefaultSpider {
         val fileName = "race_thread" + Thread.currentThread().getId() + ".txt"
         val fw = new FileWriter(fileName, true)
         try {
-
           fw.write( link + "\n")
         }
         finally fw.close()
       }
     }
-
   }
-
 }
 
 object crawler {
@@ -43,7 +38,6 @@ object crawler {
     // close existing files
     for (i <- 0 to 30) {
       val fileName = "race_thread" + i + ".txt"
-
       val file_to_check = new File(fileName)
       val exist = file_to_check.exists()
       if (exist) {
@@ -59,5 +53,3 @@ object crawler {
     crawler begin
   }
 }
-
-*/

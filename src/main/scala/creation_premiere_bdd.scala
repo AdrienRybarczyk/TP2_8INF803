@@ -1,9 +1,6 @@
 
-import java.io.{BufferedReader, File, FileWriter, InputStreamReader}
-
+import java.io.File
 import org.apache.spark.{SparkConf, SparkContext}
-
-import scala.collection.mutable.ArrayBuffer
 import scala.io.Source
 
 object creation_premiere_bdd extends Serializable{
@@ -34,7 +31,6 @@ object creation_premiere_bdd extends Serializable{
               var lien=l.split("/")
               creaturename=lien(lien.length-2).toString()
               //println ("la créature est "+creaturename+" elle est dans le fichier "+i)
-
             }
             else{
               var lien=l.split("/")
@@ -49,28 +45,25 @@ object creation_premiere_bdd extends Serializable{
           var buffer2=creature ++ Array((creaturename,creaturespell))
           creature=buffer2
         })
-        }
       }
-/*
-    println("le tableau de tuple")
-    creature.foreach(e=>
-    println(e)
-
-    )
-*/
+    }
+    /*
+        println("le tableau de tuple")
+        creature.foreach(e=>
+        println(e)
+        )
+    */
 
     val monRdd=sc.makeRDD(creature)
-      /*monRdd.collect.foreach(e=>{
-      println("")
-      print("la créature est ")
-      print(e._1+ "  ")
-      print("ces sort sont ")
+    /*monRdd.collect.foreach(e=>{
+    println("")
+    print("la créature est ")
+    print(e._1+ "  ")
+    print("ces sort sont ")
 
-      e._2.foreach(f=> print (f+";"))
-    })
-
-       */
-
+    e._2.foreach(f=> print (f+";"))
+  })
+     */
     var Rddinverse=monRdd.flatMap(e=>{
       var resultats = Array[(String,String)]()
       var elem=Tuple2[String,String]("","")
@@ -88,8 +81,5 @@ object creation_premiere_bdd extends Serializable{
     var Rddinverse2=Rddinverse.reduceByKey((a,b)=>a+"/"+b).collect()
     println("chaque sort + liste des créatures")
     Rddinverse2.foreach(e=>println(e))
-
-
-
   }
 }
